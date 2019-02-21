@@ -24,7 +24,7 @@ console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)
 
 class nbaMod(object):
-    """ Reddit bot that handles posting and updating the index threads periodically
+    """ Reddit bot that handles posting and updating the index and next day threads periodically
     """
 
     def __init__(self):
@@ -35,7 +35,7 @@ class nbaMod(object):
             client_id='',
             client_secret='',
             refresh_token='',
-            user_agent='')
+            user_agent='r/nba Index Thread generator v1.2.0 by /u/brexbre')
 
         self.data = data()
         
@@ -45,9 +45,9 @@ class nbaMod(object):
     def load_settings(self):
         # reddit
         self.subreddit = self.reddit.subreddit('nba')
-        self.post_subreddit = self.reddit.subreddit('nbadev')
+        self.post_subreddit = self.reddit.subreddit('nba')
         self.bot_timezone = pytz.timezone('US/Central')
-        self.index_thread_title = '/r/nba index test '
+        self.index_thread_title = 'r/NBA Game Threads Index + Daily Discussion '
 
         # load team data
         self.load_teams()
@@ -155,7 +155,8 @@ class nbaMod(object):
     def submit_next_day_thread_comments(self, date, next_day_thread, comments):
         for game in comments:
             submission = self.reddit.submission(id=next_day_thread)
-            submission.reply(game['comment'])
+            comment = submission.reply(game['comment'])
+            comment.disable_inbox_replies()
         
     def update_index_thread(self):
         thread_id = self.data.load_threads('index')[0]['id']
@@ -173,13 +174,15 @@ def runMod():
         yesterdays_date = datetime.now() - timedelta(days=1)
         yesterdays_date_formatted = yesterdays_date.strftime('%Y%m%d')
         try:
-            if now.hour >= 9:
-                if bot.need_index_thread(now.strftime('%Y%m%d')):
-                    bot.submit_index_thread()
-                else:
-                    bot.update_index_thread()
-                if bot.need_next_day_thread(yesterdays_date_formatted):
-                    bot.submit_next_day_thread(yesterdays_date_formatted)
+            if bot.need_index_thread(now.strftime('%Y%m%d')) and now.hour >= 9:
+                print('-' * 10 + str(now.hour) + '-' * 10)
+                bot.submit_index_thread()
+            elif now.hour <= 2 or now.hour >= 9:
+                print('-' * 10 + str(now.hour) + '-' * 10)
+                bot.update_index_thread()
+                
+            '''if bot.need_next_day_thread(yesterdays_date_formatted) and now.hour >= 9:
+                bot.submit_next_day_thread(yesterdays_date_formatted)''' # to-do: fix NDT posting time
             update_freq = 60 * 10
             consecutive_error_count = 0
         except KeyboardInterrupt as e:
@@ -191,7 +194,7 @@ def runMod():
             logging.exception(e)
             logging.warning("an error occurred during index creation " + str(consecutive_error_count) +
                             " consecutive errors")
-            update_freq = 60    # try again in one minute
+            update_freq = 60
             if consecutive_error_count > 10:
                 logging.warning("too many consecutive errors. exiting.")
                 run_updates = False
