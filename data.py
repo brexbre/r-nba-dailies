@@ -20,7 +20,7 @@ class data(object):
             client_id='',
             client_secret='',
             refresh_token='',
-            user_agent='')
+            user_agent='r/NBA Index Thread generator v1.2.0 by /u/brexbre')
 
         # load all other settings
         self.load_settings()
@@ -32,7 +32,7 @@ class data(object):
         self.nba_index_redditor = self.reddit.redditor('brexbre')
         self.post_subreddit = self.reddit.subreddit('nba')
         self.thread_link = 'https://reddit.com/r/nba/comments/'
-        self.index_thread_title = '/r/nba index test '
+        self.index_thread_title = 'r/NBA Game Threads Index + Daily Discussion '
 
         # load team data
         self.load_teams()
@@ -72,14 +72,14 @@ class data(object):
 
         return news
     
-    def get_threads(self, vTeam, hTeam, submissions):
+    def get_threads(self, vTeam, hTeam):
 
         away_team_med = self.team_abbrev_dict[vTeam]['med_name']
         home_team_med = self.team_abbrev_dict[hTeam]['med_name']
 
         post_id = None
         game_id = None
-        for t in submissions:
+        for t in self.subreddit.new(limit=250):
             if (away_team_med in t.title) and (home_team_med in t.title):
                 if t.link_flair_css_class == 'postgamethread':
                     post_id = t.id
@@ -99,8 +99,7 @@ class data(object):
         elif check == 'full':
             game_containers = j['games']
             games = []
-
-            last_250 = self.subreddit.new(limit=250)
+            
             for i, game_container in enumerate(game_containers):
 
                 game = {}
@@ -142,9 +141,10 @@ class data(object):
                     game['home_score'] = game_container['hTeam']['score']
                 else:
                     game['away_score'] = None
+                    game['home_score'] = None
 
                 # Find threads if they exist
-                game['game_id'], game['post_id'] = self.get_threads(away_team, home_team, last_250)
+                game['game_id'], game['post_id'] = self.get_threads(away_team, home_team)
 
                 # add to list of games
                 games.append(game)
@@ -175,8 +175,9 @@ class data(object):
 
     def rankings(self):
 
-        for submission in self.pr_redditor.submissions.new():
+        for submission in self.pr_redditor.submissions.new(limit=10):
             self.power_rankings = '[' + submission.title + '](' + submission.url + ')'
+            break
 
         logger.info('Grabbed rankings')
         return self.power_rankings
