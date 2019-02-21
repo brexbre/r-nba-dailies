@@ -18,7 +18,7 @@ class markdown:
     def generate_games_markdown(game, thread):
                
         index_markdown = '|Tip-off|Away||Home||GDT|PGT|\n' \
-                         '|:--|:-:|:-:|:-:|--:|:-:|:-:|\n'
+                         '|:--|:--|:-:|:--|--:|:-:|:-:|\n'
         next_markdown = '|Away|Home|Score|PGT|\n' \
                         '|:--|:--|:-:|:-:|\n'
 
@@ -28,29 +28,34 @@ class markdown:
             if game['game_id'] is None:
                 game_thread = ''
             else:
-                game_thread = '[(Link)](/' + game['game_id'] + ')'
+                game_thread = '[(Link)](https://reddit.com/r/nba/comments/' + game['game_id'] + ')'
 
             if game['post_id'] is None:
                 post_thread = ''
             else:
-                post_thread = '[(Link)](/' + game['post_id'] + ')'
-
-            if int(game['away_score']) > int(game['home_score']):
-                game_result = 'defeat the'
-            else:
-                game_result = 'fall to the'
+                post_thread = '[(Link)](https://reddit.com/r/nba/comments/' + game['post_id'] + ')'
                 
             # Formatting
             if thread == 'index':
                 if game['away_score'] is None:
                     game_update = 'at'
                 else:
-                    game_update = '>!' + game['away_score'] + '!< at >!' + game['home_score'] + '!<'
+                    game_update = '>!' + str(game['away_score']) + '!< at >!' + str(game['home_score']) + '!<'
                     
                 index_markdown += '|{0}|[{1}](/r/{2})|{3}|[{4}](/r/{5})|{6}|{7}|{8}|\n' \
                     .format(game['time'], game['away'], game['away_subreddit'], game_update, game['home'], game['home_subreddit'], game['current_status'], game_thread, post_thread)
 
-            elif thread == 'next':                
+            elif thread == 'next':
+                if game['away_score'] is None:
+                    game['away_score'] = ''
+                if game['home_score'] is None:
+                    game['home_score'] = ''
+
+                if int(game['away_score']) > int(game['home_score']):
+                    game_result = 'defeat the'
+                else:
+                    game_result = 'fall to the'
+                
                 next_markdown += '|[{0}](/r/{1})|[{2}](/r/{3})|{4} - {5}|{6}|\n' \
                     .format(game['away'], game['away_subreddit'], game['home'], game['home_subreddit'], game['away_score'], game['home_score'], post_thread)
                 game_comment['comment'] = '**{0}** {1} **{2}**, {3} - {4}' \
